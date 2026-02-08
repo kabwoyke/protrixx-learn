@@ -5,6 +5,8 @@ use Livewire\Component;
 new class extends Component
 {
     //
+
+
 };
 ?>
 
@@ -20,7 +22,7 @@ new class extends Component
             </div>
 
             <div class="hidden md:flex md:space-x-8">
-                <a href="#" class="inline-flex items-center px-1 pt-1 text-sm font-medium  text-slate-500 ">Dashboard</a>
+                <a href="{{ route('browse_papers') }}" wire:navigate class="inline-flex items-center px-1 pt-1 text-sm font-medium  text-slate-500 ">Browse Papers</a>
                 <a href="#" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 hover:border-slate-300 border-b-2 border-transparent transition">Past Papers</a>
                 <a href="#" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 hover:border-slate-300 border-b-2 border-transparent transition">Study Notes</a>
             </div>

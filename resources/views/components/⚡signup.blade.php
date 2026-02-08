@@ -27,9 +27,9 @@ new class extends Component
         $user = User::where('email' , $this->email)->first();
 
         if($user){
-            $this->error_message = 'Account Already Exists';
-             $this->loading = false;
-            abort(401 , 'Account already exists');
+            return redirect()->back()
+        ->with('error', 'An account with this email already exists.')
+        ->withInput();
         }
 
         $hashedPassword = Hash::make($this->password);
@@ -41,7 +41,8 @@ new class extends Component
         ]);
 
          $this->loading = false;
-        return redirect()->back();
+
+        return redirect()->to('/auth/login')->with('status', 'Your account has been created! Please log in.');
 
 
     }
@@ -50,10 +51,20 @@ new class extends Component
 
 <div class="max-w-md mx-auto px-6 py-10">
 
+
   <div class="text-center mb-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-2">Join Protrixx Learn</h1>
     <p class="text-gray-600">Get instant access to top-tier exam resources</p>
   </div>
+
+    @if(session('error'))
+    <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg flex items-center shadow-sm">
+        <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+        </svg>
+        <p class="text-sm font-semibold">{{ session('error') }}</p>
+    </div>
+  @endif
 
   <form class="space-y-5" wire:submit='signup'>
     <div>
@@ -69,6 +80,9 @@ new class extends Component
         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1c7ed6] focus:border-[#1c7ed6] outline-none transition"
         required
       >
+      @error('phone_number')
+        <span class="text-red-400 text-sm" >{{ $message }}</span>
+      @enderror
     </div>
 
     <div>
@@ -87,7 +101,7 @@ new class extends Component
 
       @error('email')
 
-      <span>{{ $message }}</span>
+      <span class="text-red-400 text-sm">{{ $message }}</span>
 
       @enderror
     </div>
