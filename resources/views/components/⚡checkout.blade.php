@@ -70,7 +70,7 @@ new class extends Component {
             'Password' => $password,
             'Timestamp' => $timestamp,
             'TransactionType' => 'CustomerPayBillOnline',
-            'Amount' => $amount,
+            'Amount' => '1' ?? $amount,
             'PartyA' => $this->phoneNumber,
             'PartyB' => $short_code,
             'PhoneNumber' => $this->phoneNumber,

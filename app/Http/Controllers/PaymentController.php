@@ -60,7 +60,7 @@ class PaymentController extends Controller
                 Payment::create([
                     'order_id' => $order->id,
                     'amount' => $amount,
-                    'payment_method' => 'mpesa',
+                    'payment_method' => 'MPESA',
                     'transaction_reference' => $receipt,
                     'phone_number' => $phone,
                     'status' => 'COMPLETED'
