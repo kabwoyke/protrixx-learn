@@ -9,6 +9,38 @@ new class extends Component
 
     public $search = '';
 
+   public function addToCart($productId)
+{
+    // 1. Get current cart
+    $cart = session()->get('cart', []);
+
+    // 2. Check if item exists in session
+    if (isset($cart[$productId])) {
+        $cart[$productId]['quantity'] += 1;
+    } else {
+        // 3. Find the paper in the DB
+        $paper = Paper::find($productId);
+
+        // Safety check: ensure the paper actually exists
+        if (!$paper) {
+            return; // Or show an error message
+        }
+
+        $cart[$productId] = [
+            'title' => $paper->title,
+            'quantity' => 1,
+            'price' => $paper->price,
+            'image' => $paper->preview_path // Useful for the checkout page later
+        ];
+    }
+
+    // 4. IMPORTANT: Save the updated cart back to the session
+    session()->put('cart', $cart);
+    // dd($cart);
+    // 5. Update UI (Livewire event)
+    $this->dispatch('cart-updated', count: count($cart));
+}
+
     public function render(){
 
          $papers = Paper::with(['grade_level' , 'category'])
@@ -123,7 +155,7 @@ new class extends Component
                             <a href="{{ route('detail_page' , ['id' => $paper->id]) }}" wire:navigate class="w-full py-2 border border-[#1669B3] text-[#1669B3] font-semibold rounded-lg text-sm hover:bg-blue-50 transition inline-flex items-center justify-center">
                             Preview
                         </a>
-                            <button class="w-full py-2 bg-[#1669B3] text-white font-semibold rounded-lg text-sm hover:bg-[#125896] transition shadow-sm">Purchase</button>
+                            <button wire:click='addToCart({{ $paper->id }})' class="w-full py-2 bg-[#1669B3] text-white font-semibold rounded-lg text-sm hover:bg-[#125896] transition shadow-sm">Add To Cart</button>
                         </div>
                     </div>
                 </div>
