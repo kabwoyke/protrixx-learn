@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\SendPdf;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class PaymentController extends Controller
 {
@@ -66,9 +69,28 @@ class PaymentController extends Controller
                     'status' => 'COMPLETED'
                 ]);
 
+            
+
+                // $items = OrderItem::where('order_id' , $order->id)->with('paper')->get();
+
+                Log::info('before-sending' , ['order' => $order]);
+                $order->load('order_items.paper');
+                Log::info('eager-sending' , ['order' => $order->load('order_items.paper')]);
+
+
+            try {
+                Mail::to("edwardkaboi893@gmail.com")->send(new SendPdf($order));
+                Log::info("Email with PDFs sent to: edwardkaboi893@gmail.com");
+            } catch (\Exception $e) {
+                Log::error("Failed to send PDF email: " . $e);
+                // We don't return an error to Safaricom here because the payment was actually successful
+            }
+
                 // Note: OrderItems stay as they are, but are now 'unlocked'
                 // because the parent Order status is 'paid'.
             });
+
+            
 
             Log::info("Payment Successful for Order #{$order->id}. Receipt: {$receipt}");
 

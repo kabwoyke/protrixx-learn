@@ -13,7 +13,6 @@ class PaperController extends Controller
 
     public function render_browse_papers(){
 
-
         return view('papers.index');
     }
 

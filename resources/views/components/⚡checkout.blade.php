@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Session;
 
 new class extends Component {
     //
@@ -13,6 +14,11 @@ new class extends Component {
     public $fullName;
     public $statusMessage = '';
     public $phoneNumber; // Format: 2547XXXXXXXX
+    public $count = 0;
+    public $isWaitingForPayment = false;
+    public $queryMessage = '';
+    #[Session]
+    public $checkoutId = '';
 
     public function getCartProperty()
     {
@@ -29,6 +35,19 @@ new class extends Component {
             0,
         );
     }
+
+    protected function getMpesaToken()
+{
+    return Cache::remember('mpesa_access_token', 3600, function () {
+        $auth_key = base64_encode(env('CONSUMER_KEY') . ':' . env('CONSUMER_SECRET'));
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Basic ' . $auth_key,
+        ])->get('https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials');
+
+        return $response->json()['access_token'] ?? null;
+    });
+}
 
     public function processCheckout()
     {
@@ -51,17 +70,7 @@ new class extends Component {
         $password = base64_encode($short_code . $passkey . $timestamp);
         $amount = $this->getTotal();
 
-        $token = Cache::remember('mpesa_access_token', 3600, function () {
-            $consumer_key = env('CONSUMER_KEY');
-            $consumer_secret = env('CONSUMER_SECRET');
-            $auth_key = base64_encode($consumer_key . ':' . $consumer_secret);
-
-            $response = Http::withHeaders([
-                'Authorization' => 'Basic ' . $auth_key,
-            ])->get('https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials');
-
-            return $response->json('access_token');
-        });
+        $token = $this->getMpesaToken();
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $token,
@@ -74,7 +83,7 @@ new class extends Component {
             'PartyA' => $this->phoneNumber,
             'PartyB' => $short_code,
             'PhoneNumber' => $this->phoneNumber,
-            'CallBackURL' => 'https://a460-102-204-4-12.ngrok-free.app/callback',
+            'CallBackURL' => 'https://74f0-102-204-4-12.ngrok-free.app/callback',
             'AccountReference' => 'Protrixx-Learn',
             'TransactionDesc' => 'Ticket Payment',
         ]);
@@ -104,11 +113,87 @@ new class extends Component {
                 ]);
             }
 
+            $this->checkoutId = $responseData['CheckoutRequestID'];
+            $this->isWaitingForPayment = true;
             // 3. Notify user that a prompt has been sent to their phone
             $this->statusMessage = 'Check your phone for the M-Pesa PIN prompt!';
             // $this->dispatch('notify', message: 'Check your phone for the M-Pesa PIN prompt!');
         });
     }
+
+public function queryStk()
+{
+    try {
+        $passkey = env('PASSKEY');
+        $short_code = env('SHORTCODE');
+        $timestamp = Carbon::now()->format('YmdHis');
+        $timestamp = now()->format('YmdHis');
+        $password = base64_encode($short_code . $passkey . $timestamp);
+        
+        $token = $this->getMpesaToken();
+
+        // 1. HTTP Request with Timeout
+        $response = Http::withHeaders(['Authorization' => 'Bearer ' . $token])
+            ->timeout(10) // Don't let the user hang forever
+            ->post('https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query', [
+                "BusinessShortCode" => $short_code,
+                "Password" => $password,
+                "Timestamp" => $timestamp,
+                "CheckoutRequestID" => $this->checkoutId,
+            ]);
+
+        // 2. Handle API Success (HTTP 200)
+        if ($response->successful()) {
+            $data = $response->json();
+            $resultCode = $data['ResultCode'] ?? null;
+
+            switch ($resultCode) {
+                case "0":
+                    $this->queryMessage = "Transaction was successful!";
+                    $this->isWaitingForPayment = false;
+                    // Trigger success logic (e.g., fulfill order)
+                    break;
+
+                case "1032":
+                    $this->queryMessage = "You cancelled the transaction.";
+                    $this->isWaitingForPayment = false;
+                    break;
+
+                case "1037":
+                    $this->queryMessage = "Timeout: User did not enter PIN.";
+                    $this->isWaitingForPayment = false;
+                    break;
+
+                default:
+                    // Code 0 is success, everything else is usually a failure
+                    $this->queryMessage = $data['ResultDesc'] ?? "Unknown status.";
+                    // Keep polling if it's still "In Process" (often no ResultCode yet)
+            }
+            
+            Log::info('M-Pesa Query Response', ['data' => $data]);
+
+        } else {
+            // 3. Handle API Errors (HTTP 4xx or 5xx)
+            $errorMessage = $response->json()['errorMessage'] ?? 'Safaricom API Error';
+            Log::error('M-Pesa API Failure', ['status' => $response->status(), 'msg' => $errorMessage]);
+            
+            // If the checkout ID is not found, stop polling
+            if ($response->status() === 404) {
+                $this->queryMessage = "Transaction record not found.";
+                $this->isWaitingForPayment = false;
+            }
+        }
+
+    } catch (\Illuminate\Http\Client\ConnectionException $e) {
+        // Handle connection timeouts or DNS issues
+        Log::error('M-Pesa Connection Timeout');
+        $this->queryMessage = "Connection to Safaricom timed out. Checking again...";
+    } catch (\Exception $e) {
+        // Handle unexpected logic errors
+        Log::error('General Error in queryStk: ' . $e->getMessage());
+        $this->queryMessage = "Something went wrong. Please wait.";
+    }
+}
 };
 ?>
 
@@ -137,6 +222,47 @@ new class extends Component {
     </div>
 
     <div class="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+
+        {{-- <span> {{ $queryMessage }}</span> --}}
+
+        <div @if($isWaitingForPayment) wire:poll.10s='queryStk' @endif ></div>
+
+
+        @if($queryMessage)
+    <div x-data="{ open: true }" 
+         x-show="open" 
+         x-transition 
+         class="mb-8 p-4 rounded-xl border flex items-start space-x-4 {{ str_contains($queryMessage, 'successful') ? 'bg-green-50 border-green-100' : 'bg-blue-50 border-blue-100' }}">
+        
+        <div class="flex-shrink-0 mt-0.5">
+            @if(str_contains($queryMessage, 'successful'))
+                <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            @else
+                <svg class="h-5 w-5 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            @endif
+        </div>
+
+        <div class="flex-1">
+            <h3 class="text-sm font-bold {{ str_contains($queryMessage, 'successful') ? 'text-green-800' : 'text-blue-800' }}">
+                Transaction Update
+            </h3>
+            <p class="text-sm {{ str_contains($queryMessage, 'successful') ? 'text-green-700' : 'text-blue-700' }}">
+                {{ $queryMessage }}
+            </p>
+        </div>
+
+        <button @click="open = false" class="text-slate-400 hover:text-slate-600">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </div>
+@endif
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
 
             <div class="lg:col-span-7">
@@ -149,23 +275,63 @@ new class extends Component {
                                 class="bg-slate-900 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-2">1</span>
                             Contact Information
                         </h2>
-                        <div class="grid grid-cols-1 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700">Full Name</label>
-                                <input type="text" wire:model="fullName"
-                                    class="mt-1 block w-full rounded-lg border-slate-200 shadow-sm focus:border-[#1c7ed6] focus:ring-[#1c7ed6]">
-                                @error('fullName')
-                                    <span class="text-red-500 text-xs">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700">Email Address (For
-                                    Delivery)</label>
-                                <input type="email" wire:model="email"
-                                    class="mt-1 block w-full rounded-lg border-slate-200 shadow-sm focus:border-[#1c7ed6] focus:ring-[#1c7ed6]">
-                                <p class="mt-1 text-xs text-slate-500">The study papers will be sent to this email.</p>
-                            </div>
-                        </div>
+                       <div class="grid grid-cols-1 gap-6">
+    <div class="space-y-1.5">
+        <label for="fullName" class="block text-sm font-semibold text-slate-700 ml-1">
+            Full Name
+        </label>
+        <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#1c7ed6] transition-colors">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            </div>
+            <input 
+                type="text" 
+                id="fullName"
+                wire:model.blur="fullName"
+                placeholder="e.g. John Doe"
+                class="block w-full pl-11 pr-4 py-3 bg-white border @error('fullName') border-red-400 @else border-slate-200 @enderror rounded-xl shadow-sm placeholder:text-slate-400 focus:bg-white focus:border-[#1c7ed6] focus:ring-4 focus:ring-blue-50 transition-all outline-none"
+            >
+        </div>
+        @error('fullName')
+            <p class="text-red-500 text-xs font-medium mt-1 ml-1 flex items-center">
+                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                {{ $message }}
+            </p>
+        @enderror
+    </div>
+
+    <div class="space-y-1.5">
+        <label for="email" class="block text-sm font-semibold text-slate-700 ml-1">
+            Email Address
+        </label>
+        <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#1c7ed6] transition-colors">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <input 
+                type="email" 
+                id="email"
+                wire:model.blur="email"
+                placeholder="your@email.com"
+                class="block w-full pl-11 pr-4 py-3 bg-white border @error('email') border-red-400 @else border-slate-200 @enderror rounded-xl shadow-sm placeholder:text-slate-400 focus:bg-white focus:border-[#1c7ed6] focus:ring-4 focus:ring-blue-50 transition-all outline-none"
+            >
+        </div>
+        <div class="flex justify-between items-start mt-1 px-1">
+            <p class="text-[11px] text-slate-500 leading-tight max-w-[80%]">
+                Papers will be sent here automatically after payment.
+            </p>
+            @error('email')
+                <p class="text-red-500 text-xs font-medium flex items-center">
+                    {{ $message }}
+                </p>
+            @enderror
+        </div>
+    </div>
+</div>
                     </section>
 
                     <section>
@@ -196,10 +362,10 @@ new class extends Component {
                             </div>
                         </div>
                     </section>
-                    <button type="submit" wire:loading.attr="disabled"
+                    <button type="submit" wire:key='checkout-button' wire:loading.attr="disabled"
                         class="w-full bg-[#1c7ed6] text-white py-4 rounded-xl font-bold text-lg shadow-xl shadow-blue-200 hover:bg-[#1669b3] transition flex items-center justify-center space-x-3 disabled:opacity-70 disabled:cursor-not-allowed">
 
-                        <svg wire:loading wire:target="processCheckout" class="animate-spin h-5 w-5 text-white"
+                        <svg wire:loading.delay wire:target="processCheckout" class="animate-spin h-5 w-5 text-white"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                 stroke-width="4"></circle>

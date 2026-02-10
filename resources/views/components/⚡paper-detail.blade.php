@@ -8,14 +8,65 @@ new class extends Component
 {
     //
 
+    public $paper;
+
+    public function red(){
+            $fr = "Hello";
+    }
+
+   public function addToCart($productId)
+{
+    // 1. Get current cart
+    $cart = session()->get('cart', []);
+
+    // dd($cart);
+
+    // 2. Check if item exists in session
+    if (isset($cart[$productId])) {
+        $cart[$productId]['quantity'] += 1;
+    } else {
+        // 3. Find the paper in the DB
+        $papers = Paper::find($productId);
+
+        // Safety check: ensure the paper actually exists
+        if (!$papers) {
+            return; // Or show an error message
+        }
+
+        $cart[$productId] = [
+            'title' => $papers->title,
+            'quantity' => 1,
+            'price' => $papers->price,
+            'image' => $papers->preview_path // Useful for the checkout page later
+        ];
+    }
+
+    // 4. IMPORTANT: Save the updated cart back to the session
+    session()->put('cart', $cart);
+    // dd($cart);
+    // 5. Update UI (Livewire event)
+    // 5. Calculate total quantity across all items
+    $totalQuantity = collect($cart)->sum('quantity');
+
+// 6. Update UI (Livewire event) with the sum
+    $this->dispatch('cart-updated', count: $totalQuantity);
+    // $this->dispatch('cart-updated', count: count($cart));
+}
+
+
+
+public function mount()
+    {
+
+        // Fetch the paper once using the ID from the URL
+        $this->paper = Paper::with(['category', 'grade_level'])->findOrFail(request()->route('id'));
+    }
 
     public function render(){
 
-        $paper = Paper::where('id' , request()->route('id'))->first();
+        // $paper = Paper::where('id' , request()->route('id'))->first();
 
-        return $this->view([
-            'paper' => $paper
-        ]);
+        return $this->view();
     }
 };
 ?>
@@ -46,7 +97,7 @@ new class extends Component
                 <svg xmlns="http://www.w3.org" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Back to Library
+                Back
             </a>
         </div>
 
@@ -85,12 +136,12 @@ new class extends Component
                     </div>
                     
                     <div class="space-y-3">
-                        <button class="w-full py-4 bg-[#1669B3] text-white font-bold rounded-xl text-lg hover:bg-[#125896] transform active:scale-[0.98] transition-all shadow-lg shadow-blue-200">
-                            Download Now
+                        <button wire:click='addToCart({{ $paper->id }})'  class="w-full py-4 bg-[#1669B3] text-white font-bold rounded-xl text-lg hover:bg-[#125896] transform active:scale-[0.98] transition-all shadow-lg shadow-blue-200">
+                            Add To Cart
                         </button>
-                        <button class="w-full py-3 bg-white border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition">
+                        {{-- <button class="w-full py-3 bg-white border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition">
                             Save to Library
-                        </button>
+                        </button> --}}
                     </div>
                 </div>
 

@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PaperController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Middleware\GetToken;
+use App\Mail\SendPdf;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -11,8 +13,11 @@ Route::get('/', function () {
 });
 
 Route::get('/dash', function () {
+   
     return view('dash');
 });
+
+
 
 Route::controller(AuthController::class)->group(function(){
     Route::get('/auth/login' , 'render_login_page')->name('login_page');

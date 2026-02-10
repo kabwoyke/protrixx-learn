@@ -34,11 +34,14 @@ new class extends Component
         ];
     }
 
-    // 4. IMPORTANT: Save the updated cart back to the session
-    session()->put('cart', $cart);
+   session()->put('cart', $cart);
     // dd($cart);
     // 5. Update UI (Livewire event)
-    $this->dispatch('cart-updated', count: count($cart));
+    // 5. Calculate total quantity across all items
+    $totalQuantity = collect($cart)->sum('quantity');
+
+// 6. Update UI (Livewire event) with the sum
+    $this->dispatch('cart-updated', count: $totalQuantity);
 }
 
     public function render(){

@@ -33,13 +33,21 @@ new class extends Component
         $this->dispatch('cart-updated', count: count(session()->get('cart', [])));
     }
 
-    public function removeItem($id)
-    {
-        $cart = session()->get('cart');
+ public function removeItem($id)
+{
+    $cart = session()->get('cart', []);
+
+    if (isset($cart[$id])) {
         unset($cart[$id]);
         session()->put('cart', $cart);
-        $this->dispatch('cart-updated', count: count($cart));
     }
+
+    // Calculate the new total sum of remaining items
+    $totalQuantity = collect($cart)->sum('quantity');
+
+    // Dispatch the sum to the navbar
+    $this->dispatch('cart-updated', count: $totalQuantity);
+}
 
     public function getTotal()
     {
