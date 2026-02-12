@@ -13,7 +13,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dash', function () {
-   
+
     return view('dash');
 });
 
@@ -30,6 +30,7 @@ Route::controller(PaperController::class)->group(function(){
     Route::get("/papers/{id}/" , 'render_detail_page')->name('detail_page');
     Route::get('/cart' , 'render_cart')->name('render_cart');
     Route::get("/checkout" , 'render_checkout')->name('checkout')->middleware('auth');
+    Route::get("/user/paper/orders/" , 'render_order_page')->name('render_order');
 });
 
 Route::controller(PaymentController::class)->group(function(){

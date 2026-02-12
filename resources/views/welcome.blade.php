@@ -19,7 +19,7 @@
                 Join 10,000+ students using Protrixx Learn to access verified past papers, marking schemes, and expert study notes. Everything you need to succeed, delivered instantly.
             </p>
             <div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="#browse" class="w-full sm:w-auto rounded-xl bg-[#1c7ed6] px-8 py-4 text-lg font-bold text-white shadow-xl shadow-[#1c7ed6]/30 hover:bg-[#1669b3] transition-all transform hover:-translate-y-1">
+                <a  href="{{ route('browse_papers') }}" wire:navigate class="w-full sm:w-auto rounded-xl bg-[#1c7ed6] px-8 py-4 text-lg font-bold text-white shadow-xl shadow-[#1c7ed6]/30 hover:bg-[#1669b3] transition-all transform hover:-translate-y-1">
                     Start Learning Now
                 </a>
                 <a href="#" class="text-slate-600 font-bold hover:text-slate-900">View Free Samples →</a>

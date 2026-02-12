@@ -38,6 +38,16 @@ class PaperForm
                     ->columnSpan(2)
                     ->preload(),
 
+                Select::make('type')
+                    ->searchable()
+                    ->options([
+                        'Papers' => 'Papers',
+                        'Notes' => 'Notes'
+                        ])
+                    ->required()
+                    ->columnSpan(2),
+
+
                 FileUpload::make('file_path')
                     ->disk('spaces')
                     ->directory('papers')

@@ -26,7 +26,7 @@ new class extends Component
 
     Auth::login($user, remember: true);
 
-    return redirect()->intended("dash");
+    return redirect()->intended();
 
 
     }

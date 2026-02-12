@@ -15,7 +15,8 @@ class Paper extends Model
         'year',
         'price',
         'file_path',
-        'preview_path'
+        'preview_path',
+        'type'
     ];
 
 

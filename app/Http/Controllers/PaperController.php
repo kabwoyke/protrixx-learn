@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Paper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,5 +28,10 @@ class PaperController extends Controller
 
     public function render_checkout(){
         return view('papers.checkout');
+    }
+
+    public function render_order_page(){
+
+        return view('orders.order-page');
     }
 }

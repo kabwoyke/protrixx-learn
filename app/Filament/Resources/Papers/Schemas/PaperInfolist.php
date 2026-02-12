@@ -16,6 +16,7 @@ class PaperInfolist
                     ->numeric(),
                 TextEntry::make('price')
                     ->money(),
+                TextEntry::make('type'),
                 TextEntry::make('file_path'),
                 TextEntry::make('preview_path'),
                 // TextEntry::make('category_id')
