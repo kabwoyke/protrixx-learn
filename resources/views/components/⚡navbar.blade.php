@@ -66,7 +66,7 @@ new class extends Component
             <div class="hidden md:flex md:space-x-8">
                 <a href="{{ route('browse_papers') }}" wire:navigate class="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-500">Browse Papers</a>
                 {{-- <a href="#" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition">Past Papers</a> --}}
-                <a href="#" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition">Study Notes</a>
+                <a href="{{ route("render_notes") }}" wire:navigate class="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition">Study Notes</a>
             </div>
 
             <div class="hidden md:flex md:items-center md:space-x-6">

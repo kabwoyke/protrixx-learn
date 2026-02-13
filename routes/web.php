@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\NotesController;
 use App\Http\Controllers\PaperController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Middleware\GetToken;
@@ -36,4 +37,8 @@ Route::controller(PaperController::class)->group(function(){
 Route::controller(PaymentController::class)->group(function(){
     Route::post("/payment/initiate" , "initiate_stk");
     Route::post("/callback" , "callback");
+});
+
+Route::controller(NotesController::class)->group(function(){
+    Route::get("/notes" ,'render_notes_page' )->name('render_notes');
 });
