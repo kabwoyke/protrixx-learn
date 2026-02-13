@@ -22,9 +22,9 @@ new class extends Component
         $this->cartCount = collect($cart)->sum('quantity');
 
         $orders = Order::where('status', 'COMPLETED')
+         ->where('user_id', Auth::id())
         ->with('order_items')
-        ->latest()
-        ->paginate(2);
+        ->get();
 
         $this->orderCount = count($orders);
     }

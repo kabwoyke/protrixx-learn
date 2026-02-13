@@ -83,7 +83,7 @@ new class extends Component {
             'PartyA' => $this->phoneNumber,
             'PartyB' => $short_code,
             'PhoneNumber' => $this->phoneNumber,
-            'CallBackURL' => 'https://74f0-102-204-4-12.ngrok-free.app/callback',
+            'CallBackURL' => 'https://40b4-102-204-4-12.ngrok-free.app/callback',
             'AccountReference' => 'Protrixx-Learn',
             'TransactionDesc' => 'Ticket Payment',
         ]);
@@ -129,7 +129,7 @@ public function queryStk()
         $timestamp = Carbon::now()->format('YmdHis');
         $timestamp = now()->format('YmdHis');
         $password = base64_encode($short_code . $passkey . $timestamp);
-        
+
         $token = $this->getMpesaToken();
 
         // 1. HTTP Request with Timeout
@@ -169,14 +169,14 @@ public function queryStk()
                     $this->queryMessage = $data['ResultDesc'] ?? "Unknown status.";
                     // Keep polling if it's still "In Process" (often no ResultCode yet)
             }
-            
+
             Log::info('M-Pesa Query Response', ['data' => $data]);
 
         } else {
             // 3. Handle API Errors (HTTP 4xx or 5xx)
             $errorMessage = $response->json()['errorMessage'] ?? 'Safaricom API Error';
             Log::error('M-Pesa API Failure', ['status' => $response->status(), 'msg' => $errorMessage]);
-            
+
             // If the checkout ID is not found, stop polling
             if ($response->status() === 404) {
                 $this->queryMessage = "Transaction record not found.";
@@ -229,11 +229,11 @@ public function queryStk()
 
 
         @if($queryMessage)
-    <div x-data="{ open: true }" 
-         x-show="open" 
-         x-transition 
+    <div x-data="{ open: true }"
+         x-show="open"
+         x-transition
          class="mb-8 p-4 rounded-xl border flex items-start space-x-4 {{ str_contains($queryMessage, 'successful') ? 'bg-green-50 border-green-100' : 'bg-blue-50 border-blue-100' }}">
-        
+
         <div class="flex-shrink-0 mt-0.5">
             @if(str_contains($queryMessage, 'successful'))
                 <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,8 +286,8 @@ public function queryStk()
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
             </div>
-            <input 
-                type="text" 
+            <input
+                type="text"
                 id="fullName"
                 wire:model.blur="fullName"
                 placeholder="e.g. John Doe"
@@ -312,8 +312,8 @@ public function queryStk()
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
             </div>
-            <input 
-                type="email" 
+            <input
+                type="email"
                 id="email"
                 wire:model.blur="email"
                 placeholder="your@email.com"

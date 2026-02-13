@@ -11,9 +11,12 @@ new class extends Component
 
     public function render(){
          $orders = Order::where('status', 'COMPLETED')
+          ->where('user_id', Auth::id())
         ->with('order_items')
         ->latest()
         ->paginate(2);
+
+        dd(Auth::id());
 
         $this->orderCount = count($orders);
 

@@ -2,12 +2,17 @@
 
 use Livewire\Component;
 use App\Models\Paper;
+use App\Models\Category;
+use App\Models\GradeLevel;
 
 new class extends Component
 {
     //
 
     public $search = '';
+    public $selectedCategory = '';
+    public $selectedGrade = '';
+    public $selectedYear = '';
 
    public function addToCart($productId)
 {
@@ -46,18 +51,35 @@ new class extends Component
 
     public function render(){
 
-         $papers = Paper::with(['grade_level' , 'category'])
-            ->when($this->search, function($query) {
-                $query->where('title', 'like', '%' . $this->search . '%')
-                      ->orWhere('year', 'like', '%' . $this->search . '%')
-                      ->orWhereHas('grade_level', function($q) {
-                          $q->where('name', 'like', '%' . $this->search . '%');
-                      });
-            })
-            ->latest()
-            ->paginate(12); // Use paginate instead of get() for your UI
+         $papers = Paper::with(['grade_level', 'category'])
+        // Search Filter
+        ->when($this->search, function($query) {
+            $query->where(function($q) {
+                $q->where('title', 'like', '%' . $this->search . '%')
+                  ->orWhere('year', 'like', '%' . $this->search . '%');
+            });
+        })
+        // Category Filter
+        ->when($this->selectedCategory, function($query) {
+            $query->where('category_id', $this->selectedCategory);
+        })
+        // Grade Level Filter
+        ->when($this->selectedGrade, function($query) {
+            $query->where('grade_level_id', $this->selectedGrade);
+        })
+        // Year Filter
+        ->when($this->selectedYear, function($query) {
+            $query->where('year', $this->selectedYear);
+        })
+        ->latest()
+        ->paginate(12);
 
-         return $this->view(['papers' => $papers]);
+         return $this->view([
+            'papers' => $papers,
+            'categories' => Category::all(), // Pass categories to view
+            'grades' => GradeLevel::all(),   // Pass grades to view
+            'years' => Paper::select('year')->distinct()->pluck('year'),
+        ]);
 
     }
 
@@ -92,13 +114,32 @@ new class extends Component
         </div>
 
         <!-- Filters & Results Info -->
-        <div class="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
-            <span class="text-gray-500 font-medium italic">Showing {{ count($papers) }} results</span>
-            <div class="flex space-x-3">
-                <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition">Filter</button>
-                <button class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition">Sort: Newest</button>
-            </div>
-        </div>
+     <div class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-gray-200 pb-6 gap-4">
+    <span class="text-gray-500 font-medium italic">Showing {{ $papers->total() }} results</span>
+
+    <div class="flex flex-wrap items-center gap-3">
+        <select wire:model.live="selectedCategory" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-[#1669B3] outline-none">
+            <option value="">All Categories</option>
+            @foreach($categories as $category)
+                <option value="{{ $category->id }}">{{ $category->name }}</option>
+            @endforeach
+        </select>
+
+        <select wire:model.live="selectedGrade" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-[#1669B3] outline-none">
+            <option value="">All Grades</option>
+            @foreach($grades as $grade)
+                <option value="{{ $grade->id }}">{{ $grade->name }}</option>
+            @endforeach
+        </select>
+
+        <select wire:model.live="selectedYear" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-[#1669B3] outline-none">
+            <option value="">All Years</option>
+            @foreach($years as $year)
+                <option value="{{ $year }}">{{ $year }}</option>
+            @endforeach
+        </select>
+    </div>
+</div>
 
         <!-- Papers Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
