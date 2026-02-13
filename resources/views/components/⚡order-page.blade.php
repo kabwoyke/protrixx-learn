@@ -2,12 +2,27 @@
 
 use Livewire\Component;
 use App\Models\Order;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 new class extends Component
 {
     //
 
     public $orderCount = 0;
+
+    public function downloadInvoice($orderId)
+    {
+        $order = Order::where('user_id', Auth::id())
+            ->with(['order_items.paper'])
+            ->findOrFail($orderId);
+
+        // This points to a blade file we will create in Step 3
+        $pdf = Pdf::loadView('invoice.invoice', ['order' => $order]);
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->stream();
+        }, "Protrixx-Invoice-{$order->id}.pdf");
+    }
 
     public function render(){
          $orders = Order::where('status', 'COMPLETED')
@@ -87,10 +102,18 @@ new class extends Component
 </div>
 
                         <div class="mt-6 flex justify-end items-center space-x-4 border-t border-gray-100 pt-4">
-                            <a href="#" class="text-sm font-semibold text-gray-500 hover:text-[#1669B3] transition-colors">Download Invoice</a>
-                            {{-- <button class="bg-[#1669B3] hover:bg-[#125592] text-white px-6 py-2 rounded-md font-bold text-sm shadow-md transition-all active:transform active:scale-95">
-                                Order Details
-                            </button> --}}
+                           <button
+    wire:click="downloadInvoice({{ $order->id }})"
+    wire:loading.attr="disabled"
+    class="text-sm font-semibold text-gray-500 hover:text-[#1669B3] transition-colors disabled:opacity-50"
+>
+    <span wire:loading.remove wire:target="downloadInvoice({{ $order->id }})">
+        Download Invoice
+    </span>
+    <span wire:loading wire:target="downloadInvoice({{ $order->id }})">
+        Generating PDF...
+    </span>
+</button>
                         </div>
                     </div>
                 </div>
