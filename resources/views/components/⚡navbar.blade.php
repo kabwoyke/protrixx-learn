@@ -46,7 +46,7 @@ new class extends Component
 
     request()->session()->regenerateToken();
 
-    return redirect()->back();
+    return redirect("/");
     }
 
 };
@@ -97,7 +97,7 @@ new class extends Component
                     </span>
                 </a>
                      <a href="{{ route('render_order') }}" wire:navigate class="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition">Orders({{ $orderCount }})</a>
-                     <a wire:click='logout' wire:navigate href="#" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-red-500 hover:text-slate-700 transition">Logout</a>
+                     <a wire:click='logout'  class="inline-flex items-center px-1 pt-1 text-sm font-medium text-red-500 hover:text-slate-700 transition">Logout</a>
                  @endauth
             </div>
 
@@ -138,7 +138,7 @@ new class extends Component
 
             @auth
                      <a href="{{ route('render_order') }}" wire:navigateclass="inline-flex items-center px-1 pt-1 text-sm font-medium text-slate-500 hover:text-slate-700 transition">Orders({{ $orderCount }})</a>
-                     <a wire:click='logout' wire:navigate href="#" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-red-500 hover:text-slate-700 transition">Logout</a>
+                     <a wire:click='logout' class="inline-flex items-center px-1 pt-1 text-sm font-medium text-red-500 hover:text-slate-700 transition">Logout</a>
                  @endauth
 
         </div>
