@@ -49,7 +49,7 @@ new class extends Component
 };
 ?>
 
-<div class="max-w-md mx-auto px-6 py-10">
+<div class="max-w-md mx-auto px-6 py-10 mt-20">
 
 
   <div class="text-center mb-8">
