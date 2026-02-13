@@ -16,7 +16,7 @@ new class extends Component
         ->latest()
         ->paginate(2);
 
-        dd(Auth::id());
+        // dd(Auth::id());
 
         $this->orderCount = count($orders);
 
