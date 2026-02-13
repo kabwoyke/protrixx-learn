@@ -59,7 +59,7 @@ new class extends Component
 ?>
 
 <div>
-    <div class="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mt-20 mx-auto py-12 px-4 sm:px-6 lg:px-8">
     <h1 class="text-3xl font-extrabold text-slate-900 mb-8">Shopping Cart</h1>
 
     @if(count($this->cart) > 0)

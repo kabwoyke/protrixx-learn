@@ -42,7 +42,7 @@ new class extends Component
 };
 ?>
 
-<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gray-50 mt-20 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-5xl mx-auto">
 
         <div class="mb-8 flex justify-between items-end">

@@ -88,7 +88,7 @@ new class extends Component
 
 <div>
 
-   <div class="min-h-screen bg-gray-50 font-sans">
+   <div class="min-h-screen bg-gray-50 font-sans mt-20">
     <!-- Navbar Placeholder -->
 
 

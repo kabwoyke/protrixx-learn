@@ -197,7 +197,7 @@ public function queryStk()
 };
 ?>
 
-<div>
+<div class="mt-20">
 
     <div x-data="{ show: false }" x-init="$watch('$wire.statusMessage', value => {
         if (value) {

@@ -74,15 +74,15 @@ public function mount()
 <div>
 
 
-   <div class="min-h-screen bg-white font-sans flex flex-col md:flex-row">
-    
+   <div class="min-h-screen mt-20 bg-white font-[Rubik] flex flex-col md:flex-row">
+
     <!-- Left Side: Paper Preview Section (Scrollable) -->
     <div class="flex-1 bg-gray-100 flex items-center justify-center p-4 sm:p-12 overflow-y-auto">
         <div class="max-w-3xl w-full bg-white shadow-2xl rounded-sm ring-1 ring-gray-200">
             <!-- Full Height Preview Image -->
-            <img 
-                src="https://yolo-tickets.sfo3.cdn.digitaloceanspaces.com/{{ $paper->preview_path }}" 
-                alt="Document Preview" 
+            <img
+                src="https://yolo-tickets.sfo3.cdn.digitaloceanspaces.com/{{ $paper->preview_path }}"
+                alt="Document Preview"
                 class="w-full h-auto min-h-[80vh] object-contain p-2"
             >
         </div>
@@ -90,7 +90,7 @@ public function mount()
 
     <!-- Right Side: Details Sidebar (Fixed on Desktop) -->
     <div class="w-full md:w-[400px] lg:w-[450px] border-l border-gray-200 bg-white flex flex-col h-screen overflow-y-auto">
-        
+
         <!-- Navigation & Breadcrumb -->
         <div class="p-6 border-b border-gray-100">
             <a href="#" class="text-sm font-semibold text-[#1669B3] hover:text-[#125896] flex items-center transition">
@@ -114,7 +114,7 @@ public function mount()
 
             <!-- Title & Metadata -->
             <h1 class="text-3xl font-extrabold text-gray-900 leading-tight mb-4">{{ $paper->title }}</h1>
-            
+
             <div class="space-y-6">
                 <!-- Data Points Grid -->
                 <div class="grid grid-cols-2 gap-6 py-6 border-y border-gray-100">
@@ -134,7 +134,7 @@ public function mount()
                         <span class="text-gray-500 font-medium">Full Access Price</span>
                         <span class="text-3xl font-black text-gray-900 tracking-tighter">KES {{ number_format($paper->price) }}</span>
                     </div>
-                    
+
                     <div class="space-y-3">
                         <button wire:click='addToCart({{ $paper->id }})'  class="w-full py-4 bg-[#1669B3] text-white font-bold rounded-xl text-lg hover:bg-[#125896] transform active:scale-[0.98] transition-all shadow-lg shadow-blue-200">
                             Add To Cart
@@ -154,7 +154,7 @@ public function mount()
                 </div>
             </div>
         </div>
-        
+
         <!-- Footer Info -->
         <div class="p-8 border-t border-gray-100 text-center">
             <p class="text-xs text-gray-400 font-medium">Verified by PaperLibrary Compliance Team</p>
